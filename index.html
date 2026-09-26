@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home Base</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#12161c">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#12161c;--panel:#1a2028;--panel2:#20272f;--border:#2b333d;
+  --text:#e7ebef;--sub:#8b96a3;--accent:#e8a33d;--ok:#4fd18b;--warn:#e8635c;
+  --mono:'SF Mono',ui-monospace,Menlo,Consolas,monospace;--sans:'Inter',system-ui,-apple-system,sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans)}
+body{padding:20px;display:flex;gap:20px;min-height:100vh}
+nav{width:180px;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
+.brand{font-weight:700;font-size:17px;padding:6px 10px 20px;cursor:text;outline:none;border-radius:6px}
+.brand:hover{background:var(--panel2)}
+nav button{all:unset;cursor:pointer;color:var(--sub);padding:10px 12px;border-radius:8px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px;justify-content:space-between}
+nav button.active{background:var(--panel2);color:var(--text)}
+nav button:hover:not(.active){color:var(--text)}
+.count{font-family:var(--mono);font-size:11px;color:var(--sub);background:var(--bg);padding:1px 6px;border-radius:10px}
+.syncdot{width:7px;height:7px;border-radius:50%;background:var(--sub);display:inline-block;margin-right:6px}
+.syncdot.ok{background:var(--ok)}.syncdot.err{background:var(--warn)}
+.sidefoot{margin-top:auto;padding:10px 12px;font-size:11px;color:var(--sub);border-top:1px solid var(--border)}
+main{flex:1;min-width:0;max-width:760px}
+.view{display:none}.view.active{display:block}
+h1{font-size:20px;font-weight:600;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+.addrow{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+input,select{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:9px 10px;border-radius:7px;font-size:13px;font-family:var(--sans)}
+input[type=text]{flex:1;min-width:140px}
+input:focus,select:focus{outline:1px solid var(--accent)}
+button.primary{background:var(--accent);color:#1a1204;border:none;padding:9px 16px;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer}
+button.ghost{background:transparent;border:1px solid var(--border);color:var(--sub);padding:8px 12px;border-radius:7px;font-size:12px;cursor:pointer}
+button.ghost:hover{color:var(--text)}
+.item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.item:last-child{border:none}
+.item.done .name{text-decoration:line-through;color:var(--sub)}
+.check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--sub);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px}
+.check.on{background:var(--ok);border-color:var(--ok);color:#0e1310}
+.item .name{flex:1;font-size:14px}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--panel2);color:var(--sub)}
+.tag.high{color:var(--warn)}.tag.med{color:var(--accent)}
+.del{all:unset;cursor:pointer;color:var(--sub);font-size:16px;padding:2px 6px}
+.del:hover{color:var(--warn)}
+.empty{color:var(--sub);font-size:13px;padding:8px 0}
+.sectionhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sectionhead h2{font-size:12px;font-weight:600;color:var(--sub);letter-spacing:.02em}
+.helper-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stat{font-family:var(--mono);font-size:24px;font-weight:600}
+.small{font-size:12px;color:var(--sub);margin-top:4px}
+.day-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.day-row:last-child{border:none}
+.pill{padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+.pill.present{background:rgba(79,209,139,.15);color:var(--ok)}
+.pill.absent{background:rgba(232,99,92,.15);color:var(--warn)}
+.banner{background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:10px 12px;border-radius:6px;font-size:13px;margin-bottom:14px}
+@media(max-width:820px){body{flex-direction:column}nav{width:100%;flex-direction:row;overflow-x:auto}.helper-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand" contenteditable="true" id="dash-title" spellcheck="false">Home Base</div>
+  <button class="active" data-v="todo">To-do <span class="count" id="c-todo">0</span></button>
+  <button data-v="groceries">Groceries <span class="count" id="c-groceries">0</span></button>
+  <button data-v="helper">Helper <span class="count" id="c-helper">0</span></button>
+  <div id="nav-custom" style="display:contents"></div>
+  <button data-v="settings">Settings</button>
+  <div class="sidefoot"><span class="syncdot" id="syncdot"></span><span id="syncstate">Not connected</span></div>
+</nav>
+
+<main>
+  <div class="view active" id="v-todo">
+    <h1>To-do list</h1>
+    <div id="todo-banner"></div>
+    <div class="card">
+      <div class="addrow">
+        <input type="text" id="todo-text" placeholder="Add a task…">
+        <select id="todo-cat"></select>
+        <select id="todo-pri"><option value="low">Low</option><option value="med" selected>Medium</option><option value="high">High</option></select>
+        <input type="date" id="todo-due" style="width:140px">
+        <button class="primary" onclick="addTodo()">Add</button>
+      </div>
+      <div class="addrow">
+        <input type="text" id="todo-newcat" placeholder="New category…" style="max-width:160px">
+        <button class="ghost" onclick="addCategory()">Add category</button>
+        <button class="ghost" onclick="clearDone('todo')" style="margin-left:auto">Clear completed</button>
+      </div>
+      <div id="todo-list"></div>
+    </div>
+  </div>
+
+  <div class="view" id="v-groceries">
+    <h1>Groceries</h1>
+    <div class="card">
+      <div class="addrow">
+        <input type="text" id="g-text" placeholder="Add an item…">
+        <input type="text" id="g-qty" placeholder="Qty" style="width:70px">
+        <select id="g-cat"><option>Produce</option><option>Dairy</option><option>Pantry</option><option>Household</option><option>Other</option></select>
+        <button class="primary" onclick="addGrocery()">Add</button>
+      </div>
+      <div class="sectionhead"><h2 style="margin:0"></h2><button class="ghost" onclick="clearDone('groceries')">Clear purchased</button></div>
+      <div id="g-list"></div>
+    </div>
+  </div>
+
+  <div class="view" id="v-helper">
+    <h1>Helper tracker</h1>
+    <div class="helper-grid">
+      <div class="card">
+        <div class="sectionhead"><h2>ATTENDANCE — LOG TODAY</h2></div>
+        <div class="addrow">
+          <input type="date" id="h-date">
+          <select id="h-status"><option value="present">Present</option><option value="absent">Absent</option><option value="half">Half day</option></select>
+          <input type="text" id="h-note" placeholder="Note (optional)">
+          <button class="primary" onclick="addAttendance()">Log</button>
+        </div>
+        <div id="h-log"></div>
+      </div>
+      <div class="card">
+        <div class="sectionhead"><h2>PAYMENT</h2></div>
+        <div class="addrow">
+          <input type="number" id="p-amt" placeholder="Monthly salary" style="width:130px">
+          <button class="ghost" onclick="setSalary()">Set</button>
+        </div>
+        <div class="stat" id="p-salary">₹0</div>
+        <div class="small">Monthly salary</div>
+        <hr style="border-color:var(--border);margin:14px 0">
+        <div class="addrow">
+          <input type="number" id="p-paid" placeholder="Amount paid" style="width:130px">
+          <input type="date" id="p-paiddate">
+          <button class="ghost" onclick="logPayment()">Log payment</button>
+        </div>
+        <div id="p-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="custom-sections"></div>
+
+  <div class="view" id="v-settings">
+    <h1>Settings</h1>
+    <div class="card">
+      <div class="sectionhead"><h2>GOOGLE SHEETS SYNC</h2></div>
+      <p class="small" style="margin-bottom:10px">Paste the Web App URL from your deployed Apps Script (see README). Every family member enters the same URL on their own phone.</p>
+      <div class="addrow">
+        <input type="text" id="api-url" placeholder="https://script.google.com/macros/s/.../exec">
+        <button class="primary" onclick="saveApiUrl()">Connect</button>
+      </div>
+      <div class="small" id="api-status"></div>
+    </div>
+    <div class="card">
+      <div class="sectionhead"><h2>NOTIFICATIONS</h2></div>
+      <button class="ghost" onclick="requestNotifPermission()">Enable reminders on this device</button>
+      <p class="small" style="margin-top:8px">Reminds you about due tasks and pending helper payments whenever you open the app. Install this page to your home screen (share menu → Add to Home Screen) for an app-like experience.</p>
+    </div>
+    <div class="card">
+      <div class="sectionhead"><h2>SECTIONS</h2></div>
+      <p class="small" style="margin-bottom:10px">Add a custom checklist section (e.g. "Bills", "Vehicle docs", "Packing list"). Everyone can use existing sections; adding or removing one requires the admin PIN below, if set.</p>
+      <div class="addrow">
+        <input type="text" id="new-section-name" placeholder="New section name…">
+        <button class="primary" onclick="addSection()">Add section</button>
+      </div>
+      <div id="section-manage-list"></div>
+    </div>
+    <div class="card">
+      <div class="sectionhead"><h2>ADMIN PIN</h2></div>
+      <p class="small" style="margin-bottom:10px">When set, this PIN is required to add/delete sections or change the PIN itself. Leave blank and save to remove the PIN entirely. This is a basic deterrent, not real security — anyone with the Sheets URL can still edit data directly.</p>
+      <div class="addrow">
+        <input type="password" id="new-admin-pin" placeholder="New PIN (leave blank to remove)">
+        <button class="ghost" onclick="setAdminPin()">Save PIN</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const store = { get(k,f){ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v))}catch(e){} } };
+
+let state = store.get('hb_state', {
+  title:'Home Base', categories:['General','Chores','Errands'],
+  todos:[], groceries:[], attendance:[], salary:0, payments:[],
+  sections:[], adminPin:''
+});
+if(!Array.isArray(state.sections)) state.sections = [];
+if(state.adminPin === undefined) state.adminPin = '';
+let apiUrl = store.get('hb_api_url', '');
+let adminUnlocked = false;
+
+function escapeHtml(s){
+  return (s===undefined||s===null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function ensureAdmin(action){
+  if(!state.adminPin || adminUnlocked){ action(); return; }
+  const entered = prompt('Enter admin PIN to make this change:');
+  if(entered === null) return;
+  if(entered === state.adminPin){ adminUnlocked = true; action(); }
+  else alert('Incorrect PIN.');
+}
+
+function saveLocal(){ store.set('hb_state', state); }
+
+async function pushToSheet(){
+  if(!apiUrl) return;
+  try{
+    await fetch(apiUrl, { method:'POST', body: JSON.stringify(state) });
+    setSyncState('ok','Synced');
+  }catch(e){ setSyncState('err','Sync failed'); }
+}
+async function pullFromSheet(silent){
+  if(!apiUrl) return;
+  try{
+    const res = await fetch(apiUrl);
+    const remote = await res.json();
+    if(remote && remote.title !== undefined){
+      state = remote;
+      saveLocal();
+      renderAll();
+      setSyncState('ok', 'Synced');
+      if(!silent) checkReminders();
+    }
+  }catch(e){ setSyncState('err','Offline — using local copy'); }
+}
+function setSyncState(cls, msg){
+  document.getElementById('syncdot').className='syncdot '+cls;
+  document.getElementById('syncstate').textContent=msg;
+}
+function saveApiUrl(){
+  apiUrl = document.getElementById('api-url').value.trim();
+  store.set('hb_api_url', apiUrl);
+  document.getElementById('api-status').textContent = apiUrl ? 'Connecting…' : '';
+  if(apiUrl) pullFromSheet();
+}
+if(apiUrl){ document.getElementById('api-url').value = apiUrl; pullFromSheet(); setInterval(()=>pullFromSheet(true), 20000); }
+else { setSyncState('', 'Local only — add a Sheets URL in Settings'); }
+
+// nav (event delegation so buttons added later for custom sections work too)
+document.querySelector('nav').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-v]');
+  if(!b) return;
+  const view = document.getElementById('v-'+b.dataset.v);
+  if(!view) return;
+  document.querySelectorAll('nav button[data-v]').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  view.classList.add('active');
+});
+
+// title
+const titleEl = document.getElementById('dash-title');
+titleEl.textContent = state.title;
+document.title = state.title;
+titleEl.addEventListener('blur', ()=>{
+  state.title = titleEl.textContent.trim() || 'Home Base';
+  document.title = state.title;
+  saveLocal(); pushToSheet();
+});
+titleEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); titleEl.blur(); } });
+
+function renderCatOptions(){ document.getElementById('todo-cat').innerHTML = state.categories.map(c=>`<option>${c}</option>`).join(''); }
+function addCategory(){
+  const inp = document.getElementById('todo-newcat'); const val = inp.value.trim();
+  if(!val || state.categories.includes(val)) return;
+  state.categories.push(val); inp.value=''; renderCatOptions(); saveLocal(); pushToSheet();
+}
+function addTodo(){
+  const text = document.getElementById('todo-text').value.trim(); if(!text) return;
+  state.todos.push({id:Date.now(), text, cat:document.getElementById('todo-cat').value, pri:document.getElementById('todo-pri').value, due:document.getElementById('todo-due').value, done:false});
+  document.getElementById('todo-text').value=''; document.getElementById('todo-due').value='';
+  renderTodos(); saveLocal(); pushToSheet();
+}
+function renderTodos(){
+  const list = document.getElementById('todo-list');
+  document.getElementById('c-todo').textContent = state.todos.filter(t=>!t.done).length;
+  list.innerHTML = state.todos.length ? state.todos.map(t=>`
+    <div class="item ${t.done?'done':''}">
+      <div class="check ${t.done?'on':''}" onclick="toggleTodo(${t.id})">${t.done?'✓':''}</div>
+      <div class="name">${escapeHtml(t.text)}${t.due?' <span style="color:var(--sub);font-size:12px">· due '+escapeHtml(t.due)+'</span>':''}</div>
+      <span class="tag">${escapeHtml(t.cat)}</span><span class="tag ${t.pri}">${escapeHtml(t.pri)}</span>
+      <button class="del" onclick="delTodo(${t.id})">×</button>
+    </div>`).join('') : '<div class="empty">No tasks yet.</div>';
+}
+function toggleTodo(id){ const t=state.todos.find(x=>x.id===id); t.done=!t.done; renderTodos(); saveLocal(); pushToSheet(); }
+function delTodo(id){ state.todos = state.todos.filter(t=>t.id!==id); renderTodos(); saveLocal(); pushToSheet(); }
+
+function addGrocery(){
+  const text = document.getElementById('g-text').value.trim(); if(!text) return;
+  state.groceries.push({id:Date.now(), text, qty:document.getElementById('g-qty').value.trim(), cat:document.getElementById('g-cat').value, done:false});
+  document.getElementById('g-text').value=''; document.getElementById('g-qty').value='';
+  renderGroceries(); saveLocal(); pushToSheet();
+}
+function renderGroceries(){
+  const list = document.getElementById('g-list');
+  document.getElementById('c-groceries').textContent = state.groceries.filter(g=>!g.done).length;
+  list.innerHTML = state.groceries.length ? state.groceries.map(g=>`
+    <div class="item ${g.done?'done':''}">
+      <div class="check ${g.done?'on':''}" onclick="toggleGrocery(${g.id})">${g.done?'✓':''}</div>
+      <div class="name">${escapeHtml(g.text)}${g.qty?' <span style="color:var(--sub)">× '+escapeHtml(g.qty)+'</span>':''}</div>
+      <span class="tag">${escapeHtml(g.cat)}</span>
+      <button class="del" onclick="delGrocery(${g.id})">×</button>
+    </div>`).join('') : '<div class="empty">List is empty.</div>';
+}
+function toggleGrocery(id){ const g=state.groceries.find(x=>x.id===id); g.done=!g.done; renderGroceries(); saveLocal(); pushToSheet(); }
+function delGrocery(id){ state.groceries = state.groceries.filter(g=>g.id!==id); renderGroceries(); saveLocal(); pushToSheet(); }
+
+function clearDone(kind){
+  if(kind==='todo'){ state.todos = state.todos.filter(t=>!t.done); renderTodos(); }
+  if(kind==='groceries'){ state.groceries = state.groceries.filter(g=>!g.done); renderGroceries(); }
+  saveLocal(); pushToSheet();
+}
+
+function addAttendance(){
+  const date = document.getElementById('h-date').value || new Date().toISOString().slice(0,10);
+  state.attendance.unshift({id:Date.now(), date, status:document.getElementById('h-status').value, note:document.getElementById('h-note').value.trim()});
+  document.getElementById('h-note').value='';
+  renderAttendance(); saveLocal(); pushToSheet();
+}
+function renderAttendance(){
+  const log = document.getElementById('h-log');
+  document.getElementById('c-helper').textContent = state.attendance.length;
+  log.innerHTML = state.attendance.length ? state.attendance.slice(0,15).map(a=>`
+    <div class="day-row"><span style="font-family:var(--mono);color:var(--sub);width:90px">${a.date}</span>
+    <span class="pill ${a.status==='present'?'present':a.status==='absent'?'absent':''}">${a.status}</span>
+    <span style="flex:1;color:var(--sub)">${escapeHtml(a.note)}</span>
+    <button class="del" onclick="delAttendance(${a.id})">×</button></div>`).join('') : '<div class="empty">No entries yet.</div>';
+}
+function delAttendance(id){ state.attendance = state.attendance.filter(a=>a.id!==id); renderAttendance(); saveLocal(); pushToSheet(); }
+
+function setSalary(){ const v=parseFloat(document.getElementById('p-amt').value); if(isNaN(v)) return; state.salary=v; renderPayments(); saveLocal(); pushToSheet(); }
+function logPayment(){
+  const amt=parseFloat(document.getElementById('p-paid').value); if(isNaN(amt)) return;
+  const date=document.getElementById('p-paiddate').value || new Date().toISOString().slice(0,10);
+  state.payments.unshift({id:Date.now(), amt, date});
+  document.getElementById('p-paid').value=''; renderPayments(); saveLocal(); pushToSheet();
+}
+function renderPayments(){
+  document.getElementById('p-salary').textContent = '₹'+(state.salary||0).toLocaleString('en-IN');
+  const hist = document.getElementById('p-history');
+  const paidThisMonth = state.payments.filter(p=>p.date.slice(0,7)===new Date().toISOString().slice(0,7)).reduce((s,p)=>s+p.amt,0);
+  const due = Math.max(0,(state.salary||0)-paidThisMonth);
+  hist.innerHTML = `<div class="small" style="margin-bottom:10px">This month: ₹${paidThisMonth.toLocaleString('en-IN')} paid, <span style="color:${due>0?'var(--warn)':'var(--ok)'}">₹${due.toLocaleString('en-IN')} ${due>0?'due':'settled'}</span></div>` +
+    (state.payments.length ? state.payments.slice(0,10).map(p=>`<div class="day-row"><span style="font-family:var(--mono);color:var(--sub);width:90px">${p.date}</span><span style="flex:1">₹${p.amt.toLocaleString('en-IN')}</span><button class="del" onclick="delPayment(${p.id})">×</button></div>`).join('') : '<div class="empty">No payments logged.</div>');
+}
+function delPayment(id){ state.payments = state.payments.filter(p=>p.id!==id); renderPayments(); saveLocal(); pushToSheet(); }
+
+function requestNotifPermission(){
+  if(!('Notification' in window)){ alert('Notifications not supported on this browser.'); return; }
+  Notification.requestPermission().then(p=>{ if(p==='granted') checkReminders(true); });
+}
+function checkReminders(announce){
+  if(!('Notification' in window) || Notification.permission!=='granted') return;
+  const today = new Date().toISOString().slice(0,10);
+  const dueTodos = state.todos.filter(t=>!t.done && t.due && t.due<=today);
+  const paidThisMonth = state.payments.filter(p=>p.date.slice(0,7)===new Date().toISOString().slice(0,7)).reduce((s,p)=>s+p.amt,0);
+  const salaryDue = (state.salary||0) - paidThisMonth;
+  if(dueTodos.length) new Notification(state.title, { body: `${dueTodos.length} task(s) due or overdue` });
+  if(salaryDue > 0) new Notification(state.title, { body: `₹${salaryDue.toLocaleString('en-IN')} helper payment due this month` });
+  if(announce && !dueTodos.length && salaryDue<=0) new Notification(state.title, { body: "Reminders enabled — you're all caught up." });
+}
+
+function renderNav(){
+  document.getElementById('nav-custom').innerHTML = state.sections.map(s=>
+    `<button data-v="sec-${s.id}">${escapeHtml(s.name)} <span class="count">${s.items.filter(i=>!i.done).length}</span></button>`
+  ).join('');
+}
+function renderSections(){
+  const container = document.getElementById('custom-sections');
+  container.innerHTML = state.sections.map(s=>`
+    <div class="view" id="v-sec-${s.id}">
+      <h1>${escapeHtml(s.name)}</h1>
+      <div class="card">
+        <div class="addrow">
+          <input type="text" id="in-${s.id}" placeholder="Add an item…">
+          <button class="primary" onclick="addSectionItem('${s.id}')">Add</button>
+        </div>
+        <div class="sectionhead"><h2 style="margin:0"></h2><button class="ghost" onclick="deleteSection('${s.id}')">Delete this section</button></div>
+        <div id="list-${s.id}"></div>
+      </div>
+    </div>`).join('');
+  state.sections.forEach(s=>renderSectionList(s.id));
+
+  const mgmt = document.getElementById('section-manage-list');
+  mgmt.innerHTML = state.sections.length ? state.sections.map(s=>`
+    <div class="item">
+      <div class="name">${escapeHtml(s.name)}</div>
+      <span class="tag">${s.items.length} item${s.items.length===1?'':'s'}</span>
+      <button class="del" onclick="deleteSection('${s.id}')">×</button>
+    </div>`).join('') : '<div class="empty">No custom sections yet.</div>';
+}
+function renderSectionList(id){
+  const s = state.sections.find(x=>x.id===id); if(!s) return;
+  const list = document.getElementById('list-'+id);
+  if(!list) return;
+  list.innerHTML = s.items.length ? s.items.map(it=>`
+    <div class="item ${it.done?'done':''}">
+      <div class="check ${it.done?'on':''}" onclick="toggleSectionItem('${id}',${it.id})">${it.done?'✓':''}</div>
+      <div class="name">${escapeHtml(it.text)}</div>
+      <button class="del" onclick="delSectionItem('${id}',${it.id})">×</button>
+    </div>`).join('') : '<div class="empty">Nothing here yet.</div>';
+}
+function addSectionItem(id){
+  const inp = document.getElementById('in-'+id); const text = inp.value.trim(); if(!text) return;
+  const s = state.sections.find(x=>x.id===id); s.items.push({id:Date.now(), text, done:false});
+  inp.value=''; renderSectionList(id); renderNav(); saveLocal(); pushToSheet();
+}
+function toggleSectionItem(id,itemId){
+  const s=state.sections.find(x=>x.id===id); const it=s.items.find(i=>i.id===itemId); it.done=!it.done;
+  renderSectionList(id); renderNav(); saveLocal(); pushToSheet();
+}
+function delSectionItem(id,itemId){
+  const s=state.sections.find(x=>x.id===id); s.items = s.items.filter(i=>i.id!==itemId);
+  renderSectionList(id); renderNav(); saveLocal(); pushToSheet();
+}
+function addSection(){
+  const inp = document.getElementById('new-section-name'); const name = inp.value.trim(); if(!name) return;
+  ensureAdmin(()=>{
+    state.sections.push({id:'sec'+Date.now(), name, items:[]});
+    inp.value='';
+    renderSections(); renderNav(); saveLocal(); pushToSheet();
+  });
+}
+function deleteSection(id){
+  ensureAdmin(()=>{
+    const s = state.sections.find(x=>x.id===id);
+    if(!s || !confirm(`Delete "${s.name}" and all its items?`)) return;
+    const wasActive = document.getElementById('v-sec-'+id)?.classList.contains('active');
+    state.sections = state.sections.filter(x=>x.id!==id);
+    renderSections(); renderNav(); saveLocal(); pushToSheet();
+    if(wasActive) document.querySelector('nav button[data-v="todo"]').click();
+  });
+}
+function setAdminPin(){
+  const inp = document.getElementById('new-admin-pin'); const newPin = inp.value.trim();
+  const apply = ()=>{
+    state.adminPin = newPin; adminUnlocked = true; inp.value='';
+    alert(newPin ? 'Admin PIN updated.' : 'Admin PIN removed — anyone can manage sections now.');
+    saveLocal(); pushToSheet();
+  };
+  if(state.adminPin) ensureAdmin(apply); else apply();
+}
+
+function renderAll(){
+  titleEl.textContent = state.title; document.title = state.title;
+  renderCatOptions(); renderTodos(); renderGroceries(); renderAttendance(); renderPayments();
+  renderSections(); renderNav();
+}
+renderAll();
+document.getElementById('h-date').value = new Date().toISOString().slice(0,10);
+setTimeout(()=>checkReminders(), 1500);
+
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
